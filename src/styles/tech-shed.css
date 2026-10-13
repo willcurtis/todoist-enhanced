@@ -17,3 +17,8 @@
   .ghead { flex-wrap:wrap; }
   .ghead .gactions { position:static; margin:0; padding:0 0 6px 22px; flex-basis:100%; }
 }
+
+/* Keep the theme shortcut reachable in the sidebar and phone toolbar. */
+.theme-toggle { flex-shrink:0; }
+.side-foot > .theme-toggle { width:100%; justify-content:center; min-height:40px; color:var(--text); border:1px solid var(--border); background:var(--surface); }
+.mobile-top .theme-toggle { margin-left:auto; }

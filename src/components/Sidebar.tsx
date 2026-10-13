@@ -16,6 +16,7 @@ import { ProjectIcon } from './ProjectIconPicker';
 import type { ViewId } from '@/domain/types';
 import type { DropTarget } from '@/domain/dnd';
 import type { TranslationKey } from '@/i18n';
+import { ThemeToggle } from './ThemeToggle';
 import { SyncStatus } from './SyncStatus';
 import { Droppable } from './dnd/Droppable';
 import { ProjectDropRow, ProjectRowSortable } from './dnd/ProjectRowSortable';
@@ -600,6 +601,7 @@ export function Sidebar({
       </div>
 
       <div className="side-foot" ref={footRef}>
+        <ThemeToggle />
         <button className="addbtn" onClick={onAddTask}>
           {t('nav.addTask')}
           <Icon name="plus" />

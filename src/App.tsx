@@ -1,6 +1,7 @@
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
+import { ThemeToggle } from './components/ThemeToggle';
 import { Sidebar } from './components/Sidebar';
 import { BulkBar } from './components/BulkBar';
 import { DragProvider } from './components/dnd/DragProvider';
@@ -795,6 +796,7 @@ function AppShell({
               scrolled away, which is the same title arriving where it is
               needed rather than a second one standing beside it. */}
           <strong className={titleShown ? ' shown' : ''}>{contextLabel}</strong>
+          <ThemeToggle compact />
           <button className="iconbtn" aria-label={t('nav.search')} onClick={() => setSearchOpen(true)}>
             <Icon name="search" />
           </button>

@@ -995,6 +995,8 @@ export const en = {
   'settings.theme': 'Appearance',
   'settings.themeHint': 'Light, dark, or the same as this device.',
   'settings.theme.system': 'Automatic',
+  'theme.switchLight': 'Switch to light mode',
+  'theme.switchDark': 'Switch to dark mode',
   'settings.theme.light': 'Light',
   'settings.theme.dark': 'Dark',
   'settings.layout': 'Layout',

@@ -997,6 +997,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.theme': 'Apparence',
   'settings.themeHint': 'Clair, sombre, ou comme cet appareil.',
   'settings.theme.system': 'Automatique',
+  'theme.switchLight': 'Passer au mode clair',
+  'theme.switchDark': 'Passer au mode sombre',
   'settings.theme.light': 'Clair',
   'settings.theme.dark': 'Sombre',
   'settings.layout': 'Disposition',
