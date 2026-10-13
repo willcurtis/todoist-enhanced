@@ -49,7 +49,6 @@ export function ConnectView() {
     if (!ok) setStatus('invalid');
   }
 
-  const legal = t('connect.legal', { author: AUTHOR }).split(AUTHOR);
 
   return (
     <div className="signin">
@@ -78,6 +77,7 @@ export function ConnectView() {
 
       <main className="signin-main">
         <div className="connect-form">
+        <div className="tech-shed-brand"><img src={`${import.meta.env.BASE_URL}brand-logo.png`} alt="" /><span>The Tech Shed<small>for Todoist</small></span></div>
         <h1>{t('connect.login')}</h1>
         <p className="connect-intro">{t('connect.intro')}</p>
 
@@ -170,7 +170,7 @@ export function ConnectView() {
         </p>
 
         <p className="connect-legal">
-          {legal[0]}<strong>{AUTHOR}</strong>{legal[1]}
+          {t('connect.legal', { author: AUTHOR })}
         </p>
         </div>
 

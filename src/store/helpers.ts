@@ -259,6 +259,12 @@ export let persistTimer: ReturnType<typeof setTimeout> | null = null;
 /** The copy waiting for its write, so a page that is being left can write it now. */
 let waiting: Snapshot | null = null;
 
+export function cancelPersist() {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = null;
+  waiting = null;
+}
+
 export function schedulePersist(snapshot: Snapshot) {
   waiting = snapshot;
   if (persistTimer) clearTimeout(persistTimer);

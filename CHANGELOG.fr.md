@@ -8,6 +8,20 @@ Chaque ligne est marquée :
 - 🎨 ce qui existait et a été redessiné ou reformulé,
 - 🐛 un bug ou une régression corrigés.
 
+## 2.6.1
+
+Fork The Tech Shed. Les entrées précédentes décrivent le projet original.
+
+🎨 **Identité The Tech Shed.** Le logo, la palette verte et anthracite et les liens du projet sont actualisés. Le crédit MIT reste dans À propos.
+
+🐛 **Erreurs de stockage visibles.** Une modification impossible à enregistrer sur votre appareil ne sera pas présentée comme en attente.
+
+🐛 **Déconnexion fiable.** Les réponses tardives et les sauvegardes différées ne restaurent plus votre ancien espace.
+
+🐛 **Connexion récupérable.** Les requêtes OAuth bloquées expirent et peuvent être relancées.
+
+🐛 **Dépendances de développement actualisées.** Les problèmes relevés par l’audit sont corrigés.
+
 ## 2.6.0
 
 Finitions rapides.

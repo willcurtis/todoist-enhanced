@@ -49,6 +49,8 @@ const manifest = JSON.parse(readFileSync(join(DIST, manifestName), 'utf8'));
 
 const required = [
   'index.html',
+  'LICENSE',
+  'NOTICE.txt',
   manifestName,
   // Sign-in with Todoist fetches this file by URL; without it Todoist refuses the app.
   'oauth/client.json',

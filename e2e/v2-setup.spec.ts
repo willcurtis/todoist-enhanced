@@ -126,7 +126,7 @@ test.describe('setup and settings (v2)', () => {
     const card = page.locator('.coffee-callout');
     await expect(card).toBeVisible();
     await expect(card.getByRole('button')).toHaveCount(0);
-    expect((await card.getByRole('link', { name: 'Buy me a coffee' }).boundingBox())!.height).toBeGreaterThanOrEqual(46);
+    expect((await card.getByRole('link', { name: 'View the project' }).boundingBox())!.height).toBeGreaterThanOrEqual(46);
   });
 
   test('Week starts on is stated, with no link and nothing to change', async ({ demo: page }) => {

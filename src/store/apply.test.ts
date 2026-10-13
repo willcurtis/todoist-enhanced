@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/db/idb', () => ({
   saveSnapshot: vi.fn(async () => {}),
+  clearAll: vi.fn(async () => {}),
   enqueue: vi.fn(async () => {}),
   dequeue: vi.fn(async () => {}),
   updateQueued: vi.fn(async () => {}),
@@ -142,4 +143,37 @@ describe('toasts (#136)', () => {
     vi.advanceTimersByTime(10_000);
     expect(useStore.getState().toasts).toEqual([]);
   });
+});
+
+it.each([true, false])('reports failed storage without applying or counting an edit (online: %s)', async (online) => {
+  vi.stubGlobal('navigator', { onLine: online });
+  vi.mocked(idb.enqueue).mockRejectedValueOnce(new Error('Storage full'));
+  await useStore.getState().apply(edits(), show);
+  expect(useStore.getState().snapshot.items.a.content).toBe('Before');
+  expect(useStore.getState().pendingCount).toBe(0);
+  expect(useStore.getState().toasts.at(-1)?.tone).toBe('error');
+  expect(sent).not.toHaveBeenCalled();
+});
+it('ignores a write response arriving after sign-out', async () => {
+  let resolve!: (value: CommandResult) => void;
+  sent.mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  const pending = useStore.getState().apply(edits(), show);
+  await vi.advanceTimersByTimeAsync(0);
+  await useStore.getState().disconnect();
+  vi.mocked(idb.saveSnapshot).mockClear();
+  resolve({ responses: [], failures: [], mapping: {}, delivered: [], undelivered: [] });
+  await pending;
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(useStore.getState().snapshot.items).toEqual({});
+  expect(idb.saveSnapshot).not.toHaveBeenCalled();
+});
+
+it('restores a delayed deletion when the outbox cannot save it', async () => {
+  vi.mocked(idb.enqueue).mockRejectedValueOnce(new Error('Storage full'));
+  await useStore.getState().removeTasks(['a']);
+  expect(useStore.getState().snapshot.items.a).toBeUndefined();
+  await vi.advanceTimersByTimeAsync(8000);
+  expect(useStore.getState().snapshot.items.a.content).toBe('Before');
+  expect(sent).not.toHaveBeenCalled();
+  expect(useStore.getState().toasts.some(t => t.tone === 'error')).toBe(true);
 });

@@ -21,7 +21,7 @@ const SECURITY_HEADERS = {
     "manifest-src 'self'",
     "worker-src 'self'",
     "base-uri 'self'",
-    "frame-src https://tally.so",
+    "frame-src 'none'",
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
@@ -40,11 +40,11 @@ const SECURITY_HEADERS = {
  * every other copy fail with "Invalid redirect URI": a fork on its own domain
  * asked Todoist to check its address against this site's list. A copy built
  * with `PUBLIC_URL=https://example.com/ npm run build` describes itself
- * instead. Left unset, the file is exactly the official site's, as before.
+ * instead. Left unset, this fork targets local development; production OAuth needs PUBLIC_URL.
  */
-const OFFICIAL_URL = 'https://todoistenhanced.julesbertolino.fr/';
+const LOCAL_URL = 'http://localhost:5192/';
 const PUBLIC_URL = (() => {
-  const url = (process.env.PUBLIC_URL ?? '').trim() || OFFICIAL_URL;
+  const url = (process.env.PUBLIC_URL ?? '').trim() || LOCAL_URL;
   return url.endsWith('/') ? url : `${url}/`;
 })();
 /** The dev server Todoist also accepts, so signing in works in development. */
@@ -64,7 +64,7 @@ export const APP_DEFINE = {
 function oauthClientDocument(publicUrl: string): Plugin {
   const body = `{
   "client_id": "${publicUrl}oauth/client.json",
-  "client_name": "Enhanced for Todoist",
+  "client_name": "The Tech Shed for Todoist",
   "client_uri": "${publicUrl}",
   "logo_uri": "${publicUrl}icon-192.png",
   "redirect_uris": [
@@ -94,6 +94,7 @@ function oauthClientDocument(publicUrl: string): Plugin {
 export default defineConfig({
   // Relative base so the build can be dropped into any subfolder on Infomaniak.
   base: './',
+  server: { host: '127.0.0.1', port: 5192, strictPort: true },
   preview: { headers: SECURITY_HEADERS },
   define: APP_DEFINE,
   resolve: {
@@ -115,11 +116,11 @@ export default defineConfig({
            was installed from. Chromium browsers — Brave included — will not
            offer to install a manifest they cannot tell apart from another. */
         id: './',
-        name: 'Enhanced for Todoist',
-        short_name: 'Enhanced',
+        name: 'The Tech Shed for Todoist',
+        short_name: 'Tech Shed',
         description: 'An independent project, not created by, affiliated with, or supported by Todoist. A local-first client built around planning a week.',
-        theme_color: '#d1453b',
-        background_color: '#ffffff',
+        theme_color: '#0a0a0a',
+        background_color: '#0a0a0a',
         display: 'standalone',
         start_url: './',
         scope: './',

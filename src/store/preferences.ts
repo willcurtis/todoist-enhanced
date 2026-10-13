@@ -18,6 +18,15 @@ export const PREFS_KEY = 'preferences';
 export let preferencesWriteTimer: number | null = null;
 
 export let creatingPreferencesTask = false;
+let preferencesGeneration = 0;
+export function cancelPreferencesWrite() {
+  preferencesGeneration += 1;
+  if (preferencesWriteTimer) clearTimeout(preferencesWriteTimer);
+  preferencesWriteTimer = null;
+  tourSnapshotBackup = null;
+  tourPrefsBackup = null;
+  tourPrefsChanged = false;
+}
 
 export let tourSnapshotBackup: Snapshot | null = null;
 /** The account's own preferences, kept aside while the tour shows its own (#4). */
@@ -195,6 +204,7 @@ export const createPreferencesSlice: Slice<PreferencesSlice> = (set, get) => ({
    */
   async ensurePreferencesTask(localChange = false) {
     if (!get().connected || get().demo || creatingPreferencesTask || tourSnapshotBackup) return;
+    const generation = preferencesGeneration;
     creatingPreferencesTask = true;
     try {
       let snapshot = get().snapshot;
@@ -204,6 +214,7 @@ export const createPreferencesSlice: Slice<PreferencesSlice> = (set, get) => ({
       let comments = settingsComments(snapshot);
       if (comments.length === 0) {
         const fetched = await fetchSettingsComments(inbox);
+        if (generation !== preferencesGeneration) return;
         if (fetched === null) return; // unreachable: try again on the next sync
         if (fetched.length > 0) {
           const notes = { ...get().snapshot.notes };

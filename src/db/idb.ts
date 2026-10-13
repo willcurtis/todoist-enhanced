@@ -105,7 +105,7 @@ export async function enqueue(commands: Command[], userId?: string): Promise<voi
     }
     await tx.done;
   } catch {
-    /* the change was already applied in memory and sent optimistically */
+    throw new Error('Unable to save changes on this device');
   }
 }
 

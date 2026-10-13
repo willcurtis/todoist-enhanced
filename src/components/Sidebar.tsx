@@ -445,6 +445,7 @@ export function Sidebar({
       {...({ inert: collapsed ? '' : undefined } as object)}
       aria-hidden={collapsed || undefined}
     >
+      <div className="tech-shed-brand compact"><img src={`${import.meta.env.BASE_URL}brand-logo.png`} alt="" /><span>The Tech Shed<small>for Todoist</small></span></div>
       <div className="side-top" ref={menuRef}>
         <button
           className="profile"

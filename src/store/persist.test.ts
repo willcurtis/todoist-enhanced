@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/db/idb', () => ({
   saveSnapshot: vi.fn(async () => {}),
+  clearAll: vi.fn(async () => {}),
   enqueue: vi.fn(async () => {}),
   dequeue: vi.fn(async () => {}),
 }));
@@ -69,4 +70,14 @@ describe('the demo never reaches the device (#132)', () => {
     expect(idb.saveSnapshot).not.toHaveBeenCalled();
     expect(idb.enqueue).not.toHaveBeenCalled();
   });
+});
+
+it('sign-out cancels a pending snapshot save', async () => {
+  const { useStore } = await import('./store');
+  schedulePersist(withTask('Private task'));
+  await useStore.getState().disconnect();
+  vi.advanceTimersByTime(1000);
+  flushPersist();
+  expect(idb.clearAll).toHaveBeenCalled();
+  expect(idb.saveSnapshot).not.toHaveBeenCalled();
 });

@@ -59,7 +59,15 @@ if (typeof document !== 'undefined') {
     for (const pending of pendingDeletes.values()) {
       if (pending.queued) continue;
       pending.queued = true;
-      void idb.enqueue(pending.commands, useStore.getState().snapshot.user?.id);
+      void idb.enqueue(pending.commands, useStore.getState().snapshot.user?.id).catch(() => {
+        pending.queued = false;
+        useStore.getState().toast(
+          useStore.getState().prefs.locale === 'fr'
+            ? 'Suppression non enregistrée sur cet appareil. Gardez cette page ouverte et réessayez.'
+            : 'Deletion could not be saved on this device. Keep this page open and try again.',
+          undefined, { tone: 'error' },
+        );
+      });
     }
   };
   document.addEventListener('visibilitychange', () => {

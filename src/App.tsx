@@ -1,4 +1,3 @@
-import { seesHireNote } from '@/domain/hireNote';
 import { EstimateConversion } from '@/components/overlays/EstimateConversion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
@@ -287,32 +286,6 @@ export function App() {
     return () => { cancelled = true; };
   }, [ready, connected, demo, settled, userId, tourOpen, walkthroughOpen, whatsNew,
     seenVersion, whatsNewOn, setPrefs, setupDone]);
-
-  /* A note for Todoist's own people, once. Put up only when nothing else has
-     the page — no tour, no first run, no What's new — so it is not lost behind
-     them, and recorded on the account the moment it is shown. */
-  const userEmail = useStore((s) => s.snapshot.user?.email);
-  const hireNoteSeen = useStore((s) => s.prefs.hireNoteSeen);
-  const setHireNote = useStore((s) => s.setHireNote);
-  useEffect(() => {
-    if (QUICK_ADD || demo || !ready || !connected || !settled || !hasOnboarded(userId)) return;
-    if (tourOpen || walkthroughOpen || whatsNew || !setupDone || seenVersion !== VERSION) return;
-    if (hireNoteSeen || !seesHireNote(userEmail)) return;
-    setHireNote(true);
-    setPrefs({ hireNoteSeen: true });
-  }, [ready, connected, demo, settled, userId, tourOpen, walkthroughOpen, whatsNew, setupDone,
-    seenVersion, hireNoteSeen, userEmail, setHireNote, setPrefs]);
-
-  /* Development only: shows the note without a Todoist address or a fresh
-     account, whether it was seen already or not. Open the app with ?hire, or
-     from the console: window.dispatchEvent(new Event('enhanced:hire-note')). */
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    const show = () => setHireNote(true);
-    if (new URLSearchParams(window.location.search).has('hire')) show();
-    window.addEventListener('enhanced:hire-note', show);
-    return () => window.removeEventListener('enhanced:hire-note', show);
-  }, [setHireNote]);
 
   const storageOpen = shouldAskEstimateStorage({
     ready: ready && connected && Boolean(userId), settled, demo, quickAdd: QUICK_ADD,

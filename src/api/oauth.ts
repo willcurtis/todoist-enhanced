@@ -41,6 +41,21 @@ interface TokenResponse {
   error?: string;
 }
 
+export const OAUTH_TIMEOUT_MS = 20_000;
+
+/** The deadline includes the response body; a stalled refresh must release its lock. */
+async function tokenRequest(options: RequestInit): Promise<{ ok: boolean; status: number; body: TokenResponse }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OAUTH_TIMEOUT_MS);
+  try {
+    const response = await fetch(TOKEN_URL, { ...options, signal: controller.signal });
+    const body = await response.json() as TokenResponse;
+    return { ok: response.ok, status: response.status, body };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /* ---------- Storage ---------- */
 
 export function readCredentials(): OAuthCredentials | null {
@@ -61,7 +76,11 @@ function writeCredentials(credentials: OAuthCredentials | null): void {
   }
 }
 
-export const forgetCredentials = (): void => writeCredentials(null);
+let credentialGeneration = 0;
+export const forgetCredentials = (): void => {
+  credentialGeneration += 1;
+  writeCredentials(null);
+};
 
 function fromResponse(body: TokenResponse, previous: OAuthCredentials | null): OAuthCredentials {
   return {
@@ -169,7 +188,7 @@ export async function completeSignIn(): Promise<SignInResult> {
   if (!pending || params.get('state') !== pending.state) return 'failed';
 
   try {
-    const response = await fetch(TOKEN_URL, {
+    const response = await tokenRequest({
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -180,7 +199,7 @@ export async function completeSignIn(): Promise<SignInResult> {
         redirect_uri: pending.redirectUri,
       }).toString(),
     });
-    const body = (await response.json()) as TokenResponse;
+    const body = response.body;
     if (!response.ok || !body.access_token) return 'failed';
     writeCredentials(fromResponse(body, null));
     return 'signed-in';
@@ -195,11 +214,12 @@ let renewing: Promise<OAuthCredentials | null> | null = null;
 
 async function renewNow(): Promise<OAuthCredentials | null> {
   // Another tab may have renewed while this one waited for the lock.
+  const generation = credentialGeneration;
   const current = readCredentials();
   if (!current?.refreshToken) return current;
   if (current.expiresAt - Date.now() > RENEW_MARGIN_MS) return current;
 
-  const response = await fetch(TOKEN_URL, {
+  const response = await tokenRequest({
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -208,13 +228,14 @@ async function renewNow(): Promise<OAuthCredentials | null> {
       refresh_token: current.refreshToken,
     }).toString(),
   });
+  if (generation !== credentialGeneration) return null;
   if (response.status === 400 || response.status === 401) {
     // The refresh token was revoked or has expired: signing in again is the only way.
     writeCredentials(null);
     return null;
   }
   if (!response.ok) throw new Error(`Token refresh failed: ${response.status}`);
-  const next = fromResponse((await response.json()) as TokenResponse, current);
+  const next = fromResponse(response.body, current);
   writeCredentials(next);
   return next;
 }
@@ -241,9 +262,7 @@ export async function freshAccessToken(force = false): Promise<string | null> {
     /* Held across tabs: two tabs renewing at once would each spend the same
        rotating refresh token, and the second would be refused. */
     const run = locks
-      ? new Promise<OAuthCredentials | null>((resolve, reject) => {
-        void locks.request('tde-oauth-renew', () => renewNow().then(resolve, reject));
-      })
+      ? Promise.resolve(locks.request('tde-oauth-renew', () => renewNow())).then(value => value)
       : renewNow();
     renewing = run.finally(() => { renewing = null; });
   }

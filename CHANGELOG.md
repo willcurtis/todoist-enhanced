@@ -13,6 +13,20 @@ things first, then redesigns, then fixes, so write them in the order you
 want within each kind: the most visible, most frequent case first. The
 French translation lives in CHANGELOG.fr.md.
 
+## 2.6.1
+
+The Tech Shed fork. Earlier entries are upstream release history.
+
+🎨 **The Tech Shed identity.** Your planner now uses The Tech Shed logo, green and charcoal palette, and project links. Upstream MIT credit remains in About.
+
+🐛 **Storage failures are visible.** An edit that cannot be saved on your device is not presented as queued.
+
+🐛 **Signing out clears pending saves.** Old responses and delayed saves cannot restore your previous workspace.
+
+🐛 **Sign-in can recover from a stalled connection.** OAuth requests time out and can be retried.
+
+🐛 **Development dependencies updated.** The reviewed dependency audit findings have been resolved.
+
 ## 2.6.0
 
 Quick finishes.

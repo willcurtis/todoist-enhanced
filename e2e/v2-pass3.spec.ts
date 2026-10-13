@@ -229,7 +229,7 @@ test.describe('settings and the panels (third pass)', () => {
     await expect(page.locator('#lists .openchoice').getByRole('radio')).toHaveCount(2);
     await expect(page.getByRole('link', { name: 'Open the website' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Today and My week' })).toHaveCount(0);
-    await expect(page.locator('.coffee-callout').getByRole('link', { name: 'Buy me a coffee' })).toBeVisible();
+    await expect(page.locator('.coffee-callout').getByRole('link', { name: 'View the project' })).toBeVisible();
   });
 
   test('Insights and "I have time" are the same panel, on the same ground', async ({ demo: page }) => {

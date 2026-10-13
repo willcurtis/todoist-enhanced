@@ -1,0 +1,8 @@
+The Tech Shed for Todoist
+A fork maintained by The Tech Shed (Will Curtis).
+Based on Enhanced for Todoist by Jules-Valentin Bertolino.
+Upstream: https://github.com/julesvbertolino/todoist-enhanced
+Original software copyright (c) 2026 Jules-Valentin Bertolino, MIT licensed.
+See LICENSE for the full licence. Original copyright and permission notices are retained.
+The Tech Shed name and supplied logo identify this fork.
+Independent of Todoist; not created by, affiliated with, or supported by Todoist.

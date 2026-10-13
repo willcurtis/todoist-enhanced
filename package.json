@@ -1,9 +1,9 @@
 {
-  "name": "todoist-enhancements",
+  "name": "the-tech-shed-todoist",
   "private": true,
-  "version": "2.6.0",
+  "version": "2.6.1",
   "engines": {
-    "node": ">=20"
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
   },
   "type": "module",
   "description": "An independent project, not created by, affiliated with, or supported by Todoist. A different front end built around planning a week.",
@@ -45,11 +45,12 @@
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
+    "sharp": "^0.35.5",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.71.1",
     "vite": "^6.0.11",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.4"
   },
   "overrides": {
     "@codemirror/language": "6.12.4"

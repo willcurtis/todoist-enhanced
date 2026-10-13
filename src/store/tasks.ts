@@ -491,9 +491,17 @@ export const createTasksSlice: Slice<TasksSlice> = (set, get) => ({
       const pending = pendingDeletes.get(key);
       if (!pending) return;
       pendingDeletes.delete(key);
-      /* The rows are already gone; this only sends the deletion (and, in the
-         demo, only forgets it). */
-      void get().apply(pending.commands, (current) => current);
+      // Restore the baseline before apply checks durable storage. If the outbox
+      // is unavailable, the tasks stay visible and the error explains why.
+      const restored = { ...get().snapshot.items };
+      for (const task of pending.items) restored[task.id] = task;
+      set({ snapshot: { ...get().snapshot, items: restored } });
+      if (!get().demo) schedulePersist(get().snapshot);
+      void get().apply(pending.commands, (current) => {
+        const items = { ...current.items };
+        for (const task of pending.items) delete items[task.id];
+        return { ...current, items };
+      });
     };
 
     pendingDeletes.set(key, {

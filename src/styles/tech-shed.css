@@ -1,0 +1,19 @@
+/* The Tech Shed palette; semantic priority and overdue colours remain distinct. */
+:root { --accent:#00764d; --accent-dark:#005c3c; --accent-soft:#e2f5eb; --accent-tint:#eef8f2; --accent-line:#b7d9c7; --accent-wash:#f1f8f4; --accent-wash-deep:#e2f5eb; --accent-badge:#b7e6cf; --on-accent:#fff; }
+:root[data-theme="dark"] { --bg:#0a0a0a; --surface:#111713; --rail:#17211d; --sidebar:#111713; --subtle:#17211d; --hover:#20352b; --text:#e8f2ed; --muted:#a7bab1; --faint:#90a69a; --border:#29443a; --border-strong:#3c5f50; --frame-app:#0a0a0a; --frame-card:#17211d; --accent:#36f9b0; --accent-dark:#36f9b0; --accent-soft:#173d2c; --accent-tint:#153326; --accent-line:#294f3d; --accent-wash:#15251c; --accent-wash-deep:#183b2a; --accent-badge:#25573c; --on-accent:#00140d; }
+.tech-shed-brand { display:flex; align-items:center; gap:16px; margin-bottom:24px; font-size:24px; font-weight:800; letter-spacing:-.035em; color:var(--text); }
+.tech-shed-brand img { width:76px; height:76px; object-fit:contain; }
+.tech-shed-brand small { display:block; font-size:12px; letter-spacing:.1em; color:var(--accent-dark); margin-top:4px; }
+.tech-shed-brand.compact { padding:18px 16px 6px; margin:0; gap:10px; font-size:17px; }
+.tech-shed-brand.compact img { width:42px; height:42px; }
+.tech-shed-brand.compact small { font-size:10px; }
+.signin-brand-name { max-width:100%; }
+.signin .connect-form { max-width:460px; }
+
+/* Green is deliberately bright: the sign-in pitch needs dark ink. */
+.signin-bubble h2, .signin-checks { color:#00140d; }
+.signin-check { background:#00140d; color:#36f9b0; }
+@media(max-width:720px) {
+  .ghead { flex-wrap:wrap; }
+  .ghead .gactions { position:static; margin:0; padding:0 0 6px 22px; flex-basis:100%; }
+}

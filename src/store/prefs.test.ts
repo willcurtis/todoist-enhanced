@@ -150,7 +150,7 @@ describe('the v2 look settings', () => {
 
   it('ignores a value it does not know instead of keeping it', () => {
     const hydrated = hydratePreferences({ layout: 'overlay', background: 'rainbow', accent: 'mauve' }, 'en');
-    expect(hydrated).toMatchObject({ layout: 'page-float', background: 'neutral', accent: 'red' });
+    expect(hydrated).toMatchObject({ layout: 'page-float', background: 'neutral', accent: 'custom' });
   });
 
   it('opens a task in a window unless the account says otherwise', () => {

@@ -11,6 +11,7 @@ import { patchItem } from './helpers';
 export async function verifyEstimateWrites(
   get: () => AppState, set: (patch: Partial<AppState>) => void,
   commands: Command[], result: CommandResult, optimistic: Snapshot,
+  isCurrent: () => boolean = () => true,
 ): Promise<{ pending: Command[]; handled: Set<string> }> {
   const pending: Command[] = [];
   const handled = new Set<string>();
@@ -31,13 +32,14 @@ export async function verifyEstimateWrites(
   // Bound concurrency avoids 179 serial round trips without flooding Todoist.
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(4, unread.length) }, async () => {
-    while (cursor < unread.length) {
+    while (isCurrent() && cursor < unread.length) {
       const cmd = unread[cursor++];
       const id = realId(cmd);
       try { const task = await fetchTask(id); if (task) returned.set(id, task); }
       catch { unreachable.add(id); }
     }
   }));
+  if (!isCurrent()) return { pending, handled };
   for (const cmd of commands) {
     if (cmd.estimateMinutes === undefined || !result.delivered.includes(cmd.uuid)) continue;
     const localId = cmd.temp_id ?? String(cmd.args.id);
@@ -82,7 +84,7 @@ export async function verifyEstimateWrites(
       for (const patch of patches) items[patch.id] = { ...patch.item, ...patch.fields, id: patch.id };
       return { ...snapshot, items };
     }));
-    if (notify) get().toast(translate(get().prefs.locale, commands.some((cmd) => handled.has(cmd.uuid) && cmd.estimateMinutes === null) ? 'estimates.clearFailed' : 'estimates.fallback'), undefined, { tone: 'error' });
+    if (notify && isCurrent()) get().toast(translate(get().prefs.locale, commands.some((cmd) => handled.has(cmd.uuid) && cmd.estimateMinutes === null) ? 'estimates.clearFailed' : 'estimates.fallback'), undefined, { tone: 'error' });
   }
   return { pending, handled };
 }

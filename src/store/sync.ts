@@ -14,10 +14,10 @@ import { sessionGet, sessionRemove, sessionSet } from '@/lib/sessionStore';
 import { forgetDemoOnboarding } from '@/domain/onboarding';
 import { defaultPreferences, hydratePreferences, type Preferences } from './prefs';
 import {
-  explainFailures, hidePending, partitionQueue, pendingDeletes, revertRefused, schedulePersist,
+  cancelPersist, explainFailures, hidePending, partitionQueue, pendingDeletes, revertRefused, schedulePersist,
 } from './helpers';
 import {
-  PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
+  cancelPreferencesWrite, PREFS_KEY, preferencesWriteTimer, remotePreferences, tourSnapshotBackup, withOnboarding,
 } from './preferences';
 import { DUST_KEY } from './dust';
 import type { AppState } from './types';
@@ -26,12 +26,17 @@ import type { Slice, SyncSlice } from './types';
 /** How often the app asks Todoist what changed while the tab is in the foreground. */
 export const POLL_INTERVAL_MS = 45_000;
 
+// Responses from a previous connection must never repopulate a signed-out account.
+let sessionGeneration = 0;
+
 /** Sends everything waiting in the outbox, oldest first. */
 export async function flushQueue(
   get: () => AppState,
   set: (patch: Partial<AppState>) => void,
 ): Promise<boolean> {
+  const generation = sessionGeneration;
   const queue = await idb.readQueue();
+  if (generation !== sessionGeneration) return false;
   if (queue.length === 0) return false;
 
   /* A deletion written to the queue because the page was hidden is still
@@ -55,6 +60,7 @@ export async function flushQueue(
   try {
     const optimistic = get().snapshot;
     const result = await sendCommands(get().snapshot.syncToken, commands);
+    if (generation !== sessionGeneration) return false;
     let merged = applyWrite(get().snapshot, result.responses, result.mapping);
 
     /* A refused creation takes its placeholder with it. A refused edit is
@@ -78,11 +84,14 @@ export async function flushQueue(
     }
 
     set({ snapshot: hidePending(merged), resolvedIds: { ...get().resolvedIds, ...result.mapping } });
-    const safety = await verifyEstimateWrites(get, set, commands, result, optimistic);
+    const safety = await verifyEstimateWrites(get, set, commands, result, optimistic, () => generation === sessionGeneration);
+    if (generation !== sessionGeneration) return false;
     await idb.dequeue(result.delivered.filter((id) => !safety.pending.some((cmd) => cmd.uuid === id)));
     if (safety.pending.length > 0) await idb.updateQueued(safety.pending);
     if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
-    set({ pendingCount: (await idb.readQueue()).length });
+    const pendingCount = (await idb.readQueue()).length;
+    if (generation !== sessionGeneration) return false;
+    set({ pendingCount });
     schedulePersist(get().snapshot);
     const failures = result.failures.filter((f) => !safety.handled.has(f.uuid));
     if (failures.length > 0) {
@@ -242,6 +251,11 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     });
   },
   async disconnect() {
+    sessionGeneration += 1;
+    cancelPersist();
+    cancelPreferencesWrite();
+    for (const pending of pendingDeletes.values()) clearTimeout(pending.timer);
+    pendingDeletes.clear();
     sessionRemove('demo');
     await auth.disconnect();
     await idb.clearAll();
@@ -254,6 +268,8 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       syncState: 'idle',
       resolvedIds: {},
       dustKept: {},
+      undoStack: [],
+      toasts: [],
       // What was asked of one account's tasks is not asked of the next one's.
       sidePanel: null,
       timeFilter: { minutes: null, scope: 'page', sort: 'duration' },
@@ -266,6 +282,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     if (!auth.isConnected()) return;
     if (get().syncState === 'syncing') return;
 
+    const generation = sessionGeneration;
     set({ syncState: 'syncing', syncError: null });
 
     try {
@@ -276,6 +293,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
            then send the rest (#129). The read is already the whole account, so
            what follows is one incremental read, not a second full one. */
         const response = await sync('*');
+        if (generation !== sessionGeneration) return;
         const fresh = applySync(emptySnapshot(), response);
         set({ snapshot: hidePending(fresh) });
         await dropForeignQueue(get, set, fresh.user?.id, signedIn.legacyOwner);
@@ -289,10 +307,12 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       /* A snapshot saved before filters were read has none, and an
          incremental read only carries what changed since: it would never
          bring the filters that already existed. One full read fills them. */
+      if (generation !== sessionGeneration) return;
       const missingFilters = !get().snapshot.filters;
       const fromScratch = signedIn ? stale : (full || stale || missingFilters);
       const token = fromScratch ? '*' : get().snapshot.syncToken;
       const response = await sync(token);
+      if (generation !== sessionGeneration) return;
       const snapshot = applySync(fromScratch ? emptySnapshot() : get().snapshot, response);
       const canonical = preferencesWriteTimer
         ? null
@@ -307,6 +327,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
          moves an account off the old settings task the first time. */
       window.setTimeout(() => void get().ensurePreferencesTask(), 0);
     } catch (error) {
+      if (generation !== sessionGeneration) return;
       if (error instanceof NotConnectedError) {
         set({ connected: false, syncState: 'idle' });
         return;
@@ -323,7 +344,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
     } finally {
       /* Whatever happened above, this sync is over. A state left on
          "syncing" stops every later sync from starting. */
-      if (get().syncState === 'syncing') set({ syncState: 'idle' });
+      if (generation === sessionGeneration && get().syncState === 'syncing') set({ syncState: 'idle' });
     }
   },
   startPolling() {
@@ -350,6 +371,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
    * rather than leaving it showing something Todoist never accepted.
    */
   async apply(commands, optimistic) {
+    const generation = sessionGeneration;
     const before = get().snapshot;
     const after = optimistic(before);
 
@@ -361,10 +383,17 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       return {};
     }
 
-    set({ snapshot: after });
-    schedulePersist(after);
-
-    await idb.enqueue(commands, get().snapshot.user?.id);
+    // Persist before showing success. A rejected write leaves the task untouched.
+    try {
+      await idb.enqueue(commands, before.user?.id);
+    } catch {
+      if (generation !== sessionGeneration) return {};
+      get().toast(translate(get().prefs.locale, 'sync.storageFailed'), undefined, { tone: 'error' });
+      return {};
+    }
+    if (generation !== sessionGeneration) return {};
+    set({ snapshot: optimistic(get().snapshot) });
+    schedulePersist(get().snapshot);
     set({ pendingCount: get().pendingCount + commands.length });
 
     if (!navigator.onLine) {
@@ -374,6 +403,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
 
     try {
       const result = await sendCommands(after.syncToken, commands);
+      if (generation !== sessionGeneration) return {};
       let merged = applyWrite(get().snapshot, result.responses, result.mapping);
       /* Todoist refused some of it, and the screen must not keep what it
          refused: each refused command gives back only the objects it touched,
@@ -398,10 +428,12 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
 
       /* Only what Todoist received leaves the queue. What the network lost
          part-way stays, with the ids resolved so far written into it. */
-      const safety = await verifyEstimateWrites(get, set, commands, result, after);
+      const safety = await verifyEstimateWrites(get, set, commands, result, after, () => generation === sessionGeneration);
+      if (generation !== sessionGeneration) return {};
       await idb.dequeue(result.delivered.filter((id) => !safety.pending.some((cmd) => cmd.uuid === id)));
       if (safety.pending.length > 0) await idb.updateQueued(safety.pending);
       if (result.undelivered.length > 0) await idb.updateQueued(result.undelivered);
+      if (generation !== sessionGeneration) return {};
       set({ pendingCount: Math.max(0, get().pendingCount - result.delivered.length + safety.pending.length) });
 
       schedulePersist(get().snapshot);
@@ -416,7 +448,7 @@ export const createSyncSlice: Slice<SyncSlice> = (set, get) => ({
       /* Only the network can throw from here: a refusal comes back in
          `failures` above. The change stays queued and goes out on the next
          sync. */
-      set({ syncState: 'offline' });
+      if (generation === sessionGeneration) set({ syncState: 'offline' });
       return {};
     }
   },

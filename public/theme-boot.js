@@ -8,13 +8,13 @@
   same way the app resolves it afterwards.
 */
 try {
-  var choice = localStorage.getItem('theme');
+  var choice = localStorage.getItem('theme') || 'dark';
   var dark = choice === 'dark' ||
     (choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   /* The accent, for the same reason: a red flash before the green
      arrives is the same wrong first paint in a different colour. */
-  var accent = localStorage.getItem('accent');
+  var accent = localStorage.getItem('accent') || 'custom';
   if (accent) document.documentElement.dataset.accent = accent;
   /* And the frame (layout and background), for the same reason. */
   var layout = localStorage.getItem('layout');

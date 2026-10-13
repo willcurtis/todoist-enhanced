@@ -19,7 +19,7 @@ import { HOME_VIEWS, type HomeView } from '@/store/prefs';
 import { DEFAULT_WEEK_LABEL } from '@/domain/types';
 import { DUST_MONTHS, isDustMonths } from '@/domain/views';
 import type { Locale, TranslationKey } from '@/i18n';
-import { APP_NAME, AUTHOR, AUTHOR_AVATAR_URL, AUTHOR_GITHUB_URL, COFFEE_URL, GITHUB_URL, LINKEDIN_URL, VERSION, X_URL } from '@/app-info';
+import { APP_NAME, AUTHOR, AUTHOR_AVATAR_URL, AUTHOR_GITHUB_URL, COFFEE_URL, GITHUB_URL, UPSTREAM_URL, VERSION } from '@/app-info';
 import { karmaStanding } from '@/domain/karma';
 import { projectTree } from '@/store/selectors';
 
@@ -174,7 +174,7 @@ export function SettingsView() {
             {/* Always there, and not dismissible: it is the one way the project
                 is paid for. */}
             <aside className="setfcard coffee-callout">
-              <img className="coffee-callout-avatar" src={AUTHOR_AVATAR_URL} alt="Jules-Valentin Bertolino" width={96} height={96} decoding="async" />
+              <img className="coffee-callout-avatar" src={AUTHOR_AVATAR_URL} alt="The Tech Shed" width={96} height={96} decoding="async" />
               <div>
                 <strong>{t('settings.coffeeCalloutTitle')}</strong>
                 <span>{t('settings.coffeeCalloutBody')}</span>
@@ -549,15 +549,9 @@ export function SettingsView() {
                 <BrandIcon name="github" />
                 GitHub
               </a>
-              <a className="btn social linkedin" href={LINKEDIN_URL} target="_blank" rel="noreferrer noopener">
-                <BrandIcon name="linkedin" />
-                LinkedIn
-              </a>
-              <a className="btn social x" href={X_URL} target="_blank" rel="noreferrer noopener" aria-label="X @julesvbertolino">
-                <BrandIcon name="x" />
-                @julesvbertolino
-              </a>
+
             </div>
+            <p className="setlegal">Based on <a href={UPSTREAM_URL} target="_blank" rel="noreferrer noopener">Enhanced for Todoist</a> by Jules-Valentin Bertolino. <a href={`${import.meta.env.BASE_URL}LICENSE`}>MIT licence</a>.</p>
             <p className="setlegal">
               {t('connect.legal', { author: AUTHOR })}
             </p>
