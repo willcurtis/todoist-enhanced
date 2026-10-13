@@ -1,0 +1,22 @@
+/** Validate the exact Pages build, not just the source configuration. */
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+const publicUrl = new URL(process.env.PUBLIC_URL);
+assert.equal(publicUrl.protocol, 'https:', 'Pages OAuth metadata needs HTTPS');
+const expected = publicUrl.href.endsWith('/') ? publicUrl.href : `${publicUrl.href}/`;
+const read = name => readFileSync(`dist/${name}`, 'utf8');
+const client = JSON.parse(read('oauth/client.json'));
+assert.equal(client.client_id, `${expected}oauth/client.json`);
+assert.equal(client.client_uri, expected);
+assert(client.redirect_uris.includes(expected));
+assert.equal(client.client_name, 'The Tech Shed for Todoist');
+const html = read('index.html').replaceAll('&#39;', "'");
+assert(html.includes('http-equiv="Content-Security-Policy"'));
+assert(html.includes("connect-src 'self' https://api.todoist.com"));
+assert(html.indexOf('Content-Security-Policy') < html.indexOf('<script'));
+assert.equal(read('LICENSE'), readFileSync('LICENSE', 'utf8'));
+assert(read('NOTICE.txt').includes('Jules-Valentin Bertolino'));
+const manifest = JSON.parse(read('manifest.webmanifest'));
+for (const { src } of manifest.icons) assert(existsSync(`dist/${src.replace(/^\.\//, '')}`), src);
+assert(existsSync('dist/sw.js'));
+console.log(`Verified Pages build for ${expected}`);

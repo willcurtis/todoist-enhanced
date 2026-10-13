@@ -18,7 +18,7 @@ This fork's feedback links point to its GitHub issues. It does not advertise the
 
 ## Hosting boundary
 
-No production site, DNS record, live account or native application was deployed. Set `PUBLIC_URL` to the real HTTPS app address before building for hosting. Todoist must be able to read that site's generated OAuth metadata. Local development and API-token sign-in do not require a hosted OAuth client. Never put a personal token into the build or repository.
+At fork creation, no production site, DNS record, live account or native application was deployed. The subsequent GitHub Pages deployment is documented in [deploying.md](deploying.md). Set `PUBLIC_URL` to the real HTTPS app address before building for hosting. Todoist must be able to read that site's generated OAuth metadata. Local development and API-token sign-in do not require a hosted OAuth client. Never put a personal token into the build or repository.
 
 Run `npm ci`, `npm run dev`, then open http://127.0.0.1:5192/. Use the demo before connecting an account.
 

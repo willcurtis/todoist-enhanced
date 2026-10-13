@@ -31,6 +31,32 @@ const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 };
 
+/** Pages cannot send custom headers. The supported CSP directives travel with
+ * the HTML, before any resource is loaded; frame-ancestors remains header-only.
+ * Development is excluded so Vite's local websocket/HMR can operate normally. */
+function staticHostPolicy(): Plugin {
+  return {
+    name: 'static-host-policy',
+    apply: 'build',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta', injectTo: 'head-prepend',
+          attrs: {
+            'http-equiv': 'Content-Security-Policy',
+            content: SECURITY_HEADERS['Content-Security-Policy']
+              .split('; ').filter((directive) => !directive.startsWith('frame-ancestors')).join('; '),
+          },
+        },
+        {
+          tag: 'meta', injectTo: 'head-prepend',
+          attrs: { name: 'referrer', content: SECURITY_HEADERS['Referrer-Policy'] },
+        },
+      ];
+    },
+  };
+}
+
 /**
  * Where this copy of the app is served from, ending with `/`.
  *
@@ -102,6 +128,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    staticHostPolicy(),
     oauthClientDocument(PUBLIC_URL),
     VitePWA({
       registerType: 'autoUpdate',

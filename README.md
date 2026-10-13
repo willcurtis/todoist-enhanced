@@ -1,6 +1,8 @@
 # The Tech Shed for Todoist
 
 A local-first weekly planner, maintained by [The Tech Shed](https://thetechshed.dev).
+
+**[Open the hosted app](https://willcurtis.github.io/todoist-enhanced/)** · [Deployment status](https://github.com/willcurtis/todoist-enhanced/actions/workflows/pages.yml)
 Connect Todoist, plan your week, estimate tasks and review what matters. Runs in the browser; there is no application backend.
 
 Forked from [Enhanced for Todoist](https://github.com/julesvbertolino/todoist-enhanced) by Jules-Valentin Bertolino. The original MIT licence and copyright are retained in [LICENSE](LICENSE). See [NOTICE](public/NOTICE.txt).
@@ -27,7 +29,7 @@ PUBLIC_URL=https://your-domain.example/ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-Use your actual HTTPS app address (including any subfolder). Todoist OAuth requires the generated `oauth/client.json` to be publicly reachable there. No hosted instance or branded desktop binary is provided by this fork. Without PUBLIC_URL, the build targets local development and API-token sign-in; do not deploy that OAuth metadata.
+Use your actual HTTPS app address (including any subfolder). Todoist OAuth requires the generated `oauth/client.json` to be publicly reachable there. The hosted instance is deployed to GitHub Pages; no branded desktop binary is provided. Without PUBLIC_URL, the build targets local development and API-token sign-in; do not deploy that OAuth metadata.
 
 Upload the complete `dist/` folder. On Apache, include `.htaccess`. Other hosts must apply equivalent security headers from `vite.config.ts`. Retain `LICENSE` and `NOTICE.txt` in every distribution. `npm run package` builds a verified ZIP; set PUBLIC_URL for that command too.
 

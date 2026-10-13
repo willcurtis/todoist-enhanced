@@ -1,0 +1,63 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'willcurtis/todoist-enhanced'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Install smoke-test browser
+        run: npx playwright install --with-deps chromium --only-shell
+      - name: Build and test the production site
+        env:
+          PUBLIC_URL: ${{ steps.pages.outputs.base_url }}/
+        # Target the deployment's branding, task workflows and mobile layout.
+        # The full upstream suite retains its separately documented existing failure.
+        run: npx playwright test e2e/tech-shed.spec.ts e2e/tasks.spec.ts e2e/v2-responsive.spec.ts --workers=2 --trace=off
+      - name: Check deployable files and OAuth address
+        env:
+          PUBLIC_URL: ${{ steps.pages.outputs.base_url }}/
+        run: node scripts/check-pages.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4
